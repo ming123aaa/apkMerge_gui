@@ -16,13 +16,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bean.*
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import compose.TextCenter
+import compose.update
 import dialog.SelectListDialog
 import theme.color333
 import theme.colorf00
 import theme.getTipTextColor
+import vm.ErrorTipState
 
 data class ChannelConfigState(
     val channel: String = "",
@@ -60,7 +63,7 @@ fun MergeConfigState.toConfig(): MergeConfig {
 }
 
 data class ApkConfigState(
-    val isUseContent: Boolean = false, // ture 只对content内容编辑 , false 对除了content的其他参数编辑
+    val isUseContent: Boolean = UserPropertiesStore.isShowApkConfig, // ture 只对content内容编辑 , false 对除了content的其他参数编辑
     val content: String = "",
     val dataMap: SnapshotStateMap<String, String> = SnapshotStateMap(),
     val packageName: String = "", //包名
@@ -76,6 +79,10 @@ data class ApkConfigState(
 fun ApkConfigState.write(channelName: String) {
     val readApkConfig = readApkConfig(channelName)
     if (isUseContent) {
+        var check=runCatching { Gson().fromJson(content, ApkConfig::class.java) }
+            .onFailure {
+                ErrorTipState.update { it.copy(isShow = true, msg = "ApkConfig.json不是一个json数据") }
+            }.getOrNull()?: ErrorTipState.update { it.copy(isShow = true, msg = "ApkConfig.json 格式错误") }
         writeApkConfigContent(channelName = channelName, content = content)
     } else {
         fun setMetaData(map: MutableMap<String, String>, key: String, value: String) {
@@ -123,7 +130,6 @@ fun readApkConfigState(channel: String): ApkConfigState {
         targetSdkVersion = readApkConfig.targetSdkVersion
     )
 }
-
 
 
 fun ChannelConfigItem.setState(state: ChannelConfigState) {
@@ -637,6 +643,7 @@ private fun EditApkConfig(channelConfigState: MutableState<ChannelConfigState>) 
                 channelState = channelState.copy(
                     apkConfigState = channelState.apkConfigState.copy(isUseContent = it)
                 )
+                UserPropertiesStore.isShowApkConfig=it
             }
         )
         Text("编辑ApkConfig.json")

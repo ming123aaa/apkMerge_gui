@@ -1,5 +1,6 @@
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import util.PropertiesStore
 
 object Constant {
 
@@ -28,6 +29,9 @@ object Constant {
     val buildApkBat="${userDirPath}/build.bat"
     val buildZipBat="${userDirPath}/buildZip.bat"
     val metadataKey="${userDirPath}/metaDataKey.json"
+    val userConfig="${userDirPath}/user.txt"
+
+
 
 
 

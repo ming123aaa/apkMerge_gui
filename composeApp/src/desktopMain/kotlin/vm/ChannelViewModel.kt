@@ -25,7 +25,7 @@ class ChannelViewModel {
     val editChannelNameState = mutableStateOf("")
     val searchKeywords = mutableStateOf("")
 
-    val isTopChannel = mutableStateOf(false)
+    val isTopChannel = mutableStateOf(UserPropertiesStore.isTopChannel)
 
     val lazyListState = LazyListState(0, 0)
 

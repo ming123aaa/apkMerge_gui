@@ -287,6 +287,7 @@ private fun ChannelTopView(channelViewModel: ChannelViewModel, generateAction: (
             })
             Row(modifier = Modifier.padding(horizontal = 10.dp)) {
                 Checkbox(channelViewModel.isTopChannel.value, onCheckedChange = {
+                    UserPropertiesStore.isTopChannel = it
                     channelViewModel.isTopChannel.value = it
                     channelViewModel.refreshChannelConfig()
                 })

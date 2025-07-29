@@ -17,8 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bean.*
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonParser
 import compose.TextCenter
 import compose.update
 import dialog.SelectListDialog
@@ -107,7 +105,7 @@ fun ApkConfigState.write(channelName: String) {
             }
         }
 
-        writeApkConfig(channelName = channelName, apkConfig = readApkConfig)
+        writeMergeApkConfig(channelName = channelName, apkConfig = readApkConfig)
     }
 }
 

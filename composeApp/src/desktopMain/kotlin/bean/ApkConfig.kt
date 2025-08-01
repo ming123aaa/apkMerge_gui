@@ -24,18 +24,87 @@ class ApkConfig {
     var versionName = ""
     var minSdkVersion = ""
     var targetSdkVersion = ""
+
+    /**
+     * 示例:
+     * "abiNames":["x86","armeabi-v7a","arm64-v8a"]
+     *
+     */
     var abiNames: List<String> = ArrayList<String>() //需要保留的abi架构,为空就是保留所有的架构
+
+    /**
+     *  meta-data修改
+     * 示例:
+     * <application>
+     * <meta-data android:name="channel" android:value="channelName" />
+     * </application>
+     *
+     * "metaDataMap":{
+     *   "channel":"channelName"
+     * }
+     */
     var metaDataMap: MutableMap<String, String> = TreeMap<String, String>() // meta-data修改
     var replaceStringManifest: List<ReplaceStringData> = emptyList() // AndroidManifest.xml 字符串替换   用于复杂的数据替换
     var deleteFileList: List<String> = emptyList() //需要删除的文件， 示例 res/mipmap-anydpi
+
+    /**示例:
+     * "changeClassPackage":{
+     *    "com.google":"xx_com.google"
+     * }
+     * 将com.google包下的类名改为xx_com.google
+     */
     var changeClassPackage: Map<OldName, NewName> = emptyMap() // 修改class所在的包名  com.xxx.yyy 中间用.隔开
+
+    /**
+     * 修改资源名称
+     * 示例:
+     * "renameResMap":{
+     *   "layout":{
+     *     "activity_main":"New_activity_main"
+     *   }
+     * }
+     * 将res/layout/activity_main.xml 修改成res/layout/New_activity_main.xml
+     */
     var renameResMap: Map<ResType, Map<OldName, NewName>> = emptyMap() // Map<type,Map<oldName,newName>>
     var smaliClassSizeMB: Double =
-        0.0//限制smaliClass文件的大小,避免方法数量超出限制无法打包,推荐值30MB， 只有 maxMB >= 1.0 && maxMB <= 1000 生效
+        0.0//限制smaliClass文件的大小,避免方法数量超出限制无法打包,推荐值30MB，  只有 maxMB >= 1.0 && maxMB <= 1000 生效
     var isOptimizeSmaliClass: Boolean = true //是否优化smali文件
     var deleteSmaliPaths: List<String> = emptyList() //需要删除的smail的文件   com/google   com/xxx/R.smali
     var isDeleteSameNameSmali: Boolean = true  //是否删除相同名称的smali文件
     var deleteManifestNodeNames: Set<String> = emptySet() //根据name删除的AndroidManifest.xml对应的节点
+
+
+    var compileSdkInfo: CompileSdkInfo = CompileSdkInfo()
+
+    /**
+     *  application节点的属性修改，
+     *  示例：<application android:theme="@style/AppTheme">
+     *  只需要配置 "applicationSetAttributeMap":{"theme":"@style/AppTheme"}
+     */
+    var applicationSetAttributeMap: Map<String, String> = TreeMap<String, String>()
+
+    /**
+     *
+     * 根据name修改的AndroidManifest.xml对应的节点的属性
+     *示例:
+     *  <activity android:name:"com.example.startactivity.MainActivity" android:theme="@style/Theme.StartActivity"/>
+     *
+     * 只需要配置:
+     * "manifestNodeSetAttributeMapByName":{
+     *     "com.example.startactivity.MainActivity": {
+     *       "theme": "@style/Theme.StartActivity"
+     *     }
+     *   }
+     */
+    var manifestNodeSetAttributeMapByName: Map<String, Map<String, String>> = TreeMap<String, Map<String, String>>()
+
+}
+
+class CompileSdkInfo {
+    var compileSdkVersion = ""
+    var compileSdkVersionCodename = ""
+    var platformBuildVersionCode = ""
+    var platformBuildVersionName = ""
 }
 
 class ReplaceStringData {
@@ -46,6 +115,7 @@ class ReplaceStringData {
     var replaceString: String = ""
 
 }
+
 
 fun readApkConfig(channelName: String): ApkConfig {
     try {

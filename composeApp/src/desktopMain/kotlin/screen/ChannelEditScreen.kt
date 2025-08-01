@@ -77,10 +77,10 @@ data class ApkConfigState(
 fun ApkConfigState.write(channelName: String) {
     val readApkConfig = readApkConfig(channelName)
     if (isUseContent) {
-        var check=runCatching { Gson().fromJson(content, ApkConfig::class.java) }
+        var check = runCatching { Gson().fromJson(content, ApkConfig::class.java) }
             .onFailure {
                 ErrorTipState.update { it.copy(isShow = true, msg = "ApkConfig.json不是一个json数据") }
-            }.getOrNull()?: ErrorTipState.update { it.copy(isShow = true, msg = "ApkConfig.json 格式错误") }
+            }.getOrNull() ?: ErrorTipState.update { it.copy(isShow = true, msg = "ApkConfig.json 格式错误") }
         writeApkConfigContent(channelName = channelName, content = content)
     } else {
         fun setMetaData(map: MutableMap<String, String>, key: String, value: String) {
@@ -334,6 +334,17 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                 }
             }, text = "sdk资源优先"
         )
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-keepActivityTheme"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-keepActivityTheme")
+                } else {
+                    extraCmd.remove("-keepActivityTheme")
+                }
+            }, text = "合并时activity的theme保持不变"
+        )
 
         ChexBoxText(
             modifier = Modifier.padding(start = 15.dp),
@@ -344,10 +355,68 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                 } else {
                     extraCmd.remove("-changeNotRSmali")
                 }
-            }, text = "强制修改非R文件内的id值(0x7f开头)"
+            }, text = "修改不引用R.class的id值(0x7f开头)"
+        )
+
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-reNameAttr"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-reNameAttr")
+                } else {
+                    extraCmd.remove("-reNameAttr")
+                }
+            }, text = "attr重命名"
+        )
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-isReNameStyle"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-isReNameStyle")
+                } else {
+                    extraCmd.remove("-isReNameStyle")
+                }
+            }, text = "style冲突重命名"
+        )
+
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-isRenameRes"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-isRenameRes")
+                } else {
+                    extraCmd.remove("-isRenameRes")
+                }
+            }, text = "res冲突重命名(style,attr除外)"
         )
 
 
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-isRenameClassPackage"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-isRenameClassPackage")
+                } else {
+                    extraCmd.remove("-isRenameClassPackage")
+                }
+            }, text = "class冲突重命名"
+        )
+
+        ChexBoxText(
+            modifier = Modifier.padding(start = 15.dp),
+            checked = extraCmd.contains("-notUseDefaultKeepClassPackage"),
+            onCheckedChange = {
+                if (it) {
+                    extraCmd.add("-notUseDefaultKeepClassPackage")
+                } else {
+                    extraCmd.remove("-notUseDefaultKeepClassPackage")
+                }
+            }, text = "禁用默认的keepClass规则"
+        )
         ChexBoxText(
             modifier = Modifier.padding(start = 15.dp),
             checked = extraCmd.contains("-useChannelApktoolYml"),
@@ -370,41 +439,6 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                     extraCmd.remove("-replaceApplication")
                 }
             }, text = "替换Application类"
-        )
-
-        ChexBoxText(
-            modifier = Modifier.padding(start = 15.dp),
-            checked = extraCmd.contains("-isRenameRes"),
-            onCheckedChange = {
-                if (it) {
-                    extraCmd.add("-isRenameRes")
-                } else {
-                    extraCmd.remove("-isRenameRes")
-                }
-            }, text = "res冲突解决"
-        )
-        ChexBoxText(
-            modifier = Modifier.padding(start = 15.dp),
-            checked = extraCmd.contains("-isRenameClassPackage"),
-            onCheckedChange = {
-                if (it) {
-                    extraCmd.add("-isRenameClassPackage")
-                } else {
-                    extraCmd.remove("-isRenameClassPackage")
-                }
-            }, text = "class冲突解决"
-        )
-
-        ChexBoxText(
-            modifier = Modifier.padding(start = 15.dp),
-            checked = extraCmd.contains("-notUseDefaultKeepClassPackage"),
-            onCheckedChange = {
-                if (it) {
-                    extraCmd.add("-notUseDefaultKeepClassPackage")
-                } else {
-                    extraCmd.remove("-notUseDefaultKeepClassPackage")
-                }
-            }, text = "禁用默认的keepClass规则"
         )
 
     }
@@ -608,10 +642,12 @@ private fun SelectMode(mode: String, onChange: (String) -> Unit) {
     if (showFileDialog) {
         val list = listOf(
             MODE_MERGE to "merge(合并sdk)",
-            MODE_SIMPLE_Fast to "simple_fast(渠道包快速打包,只支持修改<meta-data/>、包名等只需要修改AndroidManifest.xml的配置)",
-            MODE_SIMPLE to "simple(渠道包完全版,支持修改ApkConfig.json的所有内容)",
             MODE_MERGE_Reverse to "merge_reverse(sdk作为主包合并)",
-            MODE_LIST to "merge_list(多sdk合并)"
+            MODE_LIST to "merge_list(多sdk合并)",
+            MODE_SIMPLE_Fast to "simple_fast(渠道包快速打包,只支持修改<meta-data/>,包名,版本号等只需要修改AndroidManifest.xml的配置)",
+            MODE_SIMPLE to "simple(渠道包完全版,相比simple_fast新增修改icon,appName)",
+            MODE_CHANGE to "change(支持修改ApkConfig.json的所有内容)",
+            MODE_DECOMPILE to "decompile(反编译后生成zip(不生成apk),支持修改ApkConfig.json的所有内容)"
         )
         SelectListDialog(
             showDialog = showFileDialog,
@@ -641,7 +677,7 @@ private fun EditApkConfig(channelConfigState: MutableState<ChannelConfigState>) 
                 channelState = channelState.copy(
                     apkConfigState = channelState.apkConfigState.copy(isUseContent = it)
                 )
-                UserPropertiesStore.isShowApkConfig=it
+                UserPropertiesStore.isShowApkConfig = it
             }
         )
         Text("编辑ApkConfig.json")

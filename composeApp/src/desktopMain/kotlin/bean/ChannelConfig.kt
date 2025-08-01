@@ -55,7 +55,8 @@ const val MODE_SIMPLE_Fast = "simple_fast" //simple_fast模式:比simple模式�
 const val MODE_MERGE = "merge" //merge模式:合并代码资源
 const val MODE_LIST = "merge_list" //merge_list模式:合并代码资源,支持多个包合并
 const val MODE_MERGE_Reverse = "merge_reverse" //merge_reverse:反向合并代码资源,渠道包作为主包
-
+const val MODE_CHANGE="change"
+const val MODE_DECOMPILE="decompile"
 
 fun readChannelConfig(): ChannelConfig {
     if (!File(Constant.channelConfigPath).exists()) {

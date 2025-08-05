@@ -127,7 +127,7 @@ private fun SelectApk(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "主包:" + generateData.value.apkPath.ifEmpty { "请选择主包apk/zip文件" },
+                    text = "主包:" + generateData.value.apkPath.ifEmpty { "请选择主包.apk/.zip文件  zip文件:解压后为apktool反编译后的文件" },
                     modifier = Modifier.weight(1f)
                 )
                 Button(onClick = {

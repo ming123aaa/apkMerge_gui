@@ -304,6 +304,41 @@ fun ChexBoxText(
 
 @Composable
 private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+
+        Text("使用常用配置:", modifier = Modifier.align(Alignment.CenterVertically))
+        Button(onClick = {
+            extraCmd.clear()
+        }){
+            Text("默认配置")
+        }
+
+        Button(onClick = {
+            extraCmd.clear()
+            extraCmd.add("-useChannelCode")
+            extraCmd.add("-useChannelRes")
+        }){
+            Text("替换代码和资源")
+        }
+        Button(onClick = {
+            extraCmd.clear()
+            extraCmd.add("-keepActivityTheme")
+            extraCmd.add("-changeNotRSmali")
+            extraCmd.add("-reNameAttr")
+            extraCmd.add("-isReNameStyle")
+            extraCmd.add("-isRenameRes")
+            extraCmd.add("-isRenameClassPackage")
+        }){
+            Text("合并apk通用配置")
+        }
+
+
+    }
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -378,7 +413,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                 } else {
                     extraCmd.remove("-isReNameStyle")
                 }
-            }, text = "style冲突重命名"
+            }, text = "style冲突时重命名"
         )
 
         ChexBoxText(
@@ -390,7 +425,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                 } else {
                     extraCmd.remove("-isRenameRes")
                 }
-            }, text = "res冲突重命名(style,attr除外)"
+            }, text = "res冲突时重命名(style,attr除外)"
         )
 
 
@@ -403,7 +438,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
                 } else {
                     extraCmd.remove("-isRenameClassPackage")
                 }
-            }, text = "class冲突重命名"
+            }, text = "class冲突时重命名"
         )
 
         ChexBoxText(

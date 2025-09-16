@@ -121,9 +121,18 @@ private fun NavigationHome(
             action(HomeRouterIntent.ApkConfigRes)
         }
 
-
-
         NavigationHomeItem(isSelect = false, "清理缓存") {
+            rememberCoroutineScope.launch (Dispatchers.IO){
+                isShowLoading.value=true
+                FileUtils.deleteFile(Constant.outputDir)
+                FileUtils.deleteFile(Constant.oldChannelDir)
+                FileUtils.deleteFile(Constant.channelDir+"/build")
+                FileUtils.deleteFile(Constant.channelDir+"/buildOutApk")
+                isShowLoading.value=false
+
+            }
+        }
+        NavigationHomeItem(isSelect = false, "清理数据") {
             rememberCoroutineScope.launch (Dispatchers.IO){
                 isShowLoading.value=true
                 FileUtils.deleteFile(Constant.baseApk)

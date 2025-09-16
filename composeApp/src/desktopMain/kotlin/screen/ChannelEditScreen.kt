@@ -20,6 +20,7 @@ import com.google.gson.Gson
 import compose.TextCenter
 import compose.update
 import dialog.SelectListDialog
+import dialog.TipDialog
 import theme.color333
 import theme.colorf00
 import theme.getTipTextColor
@@ -250,21 +251,32 @@ private fun SelectSDkList(listMergeConfigs: SnapshotStateList<MergeConfigState>)
     listMergeConfigs.forEach {
         EditMergeConfigItem(it, onDelete = {
             listMergeConfigs.remove(it)
+        }, onTop = {
+            listMergeConfigs.remove(it)
+            listMergeConfigs.add(0, it)
         })
     }
-    SelectSdk("") {
+    SelectSdk(sdk="",isMust = false) {
         listMergeConfigs.add(MergeConfigState(channelApkFile = mutableStateOf(it)))
     }
 
 }
 
 @Composable
-private fun EditMergeConfigItem(item: MergeConfigState, onDelete: () -> Unit) {
+private fun EditMergeConfigItem(item: MergeConfigState, onDelete: () -> Unit, onTop: () -> Unit) {
     Column(
         modifier = Modifier.border(width = 1.dp, color = color333, shape = RoundedCornerShape(5.dp))
             .padding(5.dp)
     ) {
-
+        var showDialog by remember { mutableStateOf(false) }
+        if (showDialog) {
+            TipDialog(title = "删除", content = "是否删除此配置项？", onDismissRequest = {
+                showDialog = false
+            }, confirmClick = {
+                onDelete()
+                showDialog = false
+            })
+        }
         SelectSdk(item.channelApkFile.value) {
             item.channelApkFile.value = it
         }
@@ -276,8 +288,12 @@ private fun EditMergeConfigItem(item: MergeConfigState, onDelete: () -> Unit) {
             })
 
             TextCenter(text = "删除", modifier = Modifier.padding(start = 20.dp).width(150.dp).height(30.dp).clickable {
-                onDelete()
+                showDialog = true
             }, color = colorf00)
+
+            Button(onClick = { onTop() }) {
+                Text("置顶")
+            }
         }
     }
 }
@@ -314,7 +330,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
         Text("使用常用配置:", modifier = Modifier.align(Alignment.CenterVertically))
         Button(onClick = {
             extraCmd.clear()
-        }){
+        }) {
             Text("默认配置")
         }
 
@@ -322,7 +338,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
             extraCmd.clear()
             extraCmd.add("-useChannelCode")
             extraCmd.add("-useChannelRes")
-        }){
+        }) {
             Text("替换代码和资源")
         }
         Button(onClick = {
@@ -333,7 +349,7 @@ private fun SelectSdkCmd(extraCmd: SnapshotStateList<String>) {
             extraCmd.add("-isReNameStyle")
             extraCmd.add("-isRenameRes")
             extraCmd.add("-isRenameClassPackage")
-        }){
+        }) {
             Text("合并apk通用配置")
         }
 
@@ -562,9 +578,25 @@ private fun SelectSign(signConfigFile: String, onChange: (String) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        var content: String
+        var isShowTip=false
+
+        if(signConfigFile.isNotEmpty()){
+            val signList = getFileDatas(Constant.signConfigDir)?.map { "SignConfig/"+it.name } ?: emptyList()
+            if (signList.contains(signConfigFile)){
+                isShowTip=false
+                content=signConfigFile
+            }else{
+                isShowTip=true
+                content= "$signConfigFile(不存在)"
+            }
+        }else{
+            isShowTip=true
+            content="请选择签名配置(必选)"
+        }
         Text(
-            text = "签名配置:" + signConfigFile.ifEmpty { "请选择签名配置(必选)" },
-            modifier = Modifier.weight(1f), color = getTipTextColor(signConfigFile.isEmpty())
+            text = "签名配置:$content",
+            modifier = Modifier.weight(1f), color = getTipTextColor(isShowTip)
         )
         Button(onClick = { showFileDialog = true }) {
             Text("选择文件")
@@ -574,7 +606,7 @@ private fun SelectSign(signConfigFile: String, onChange: (String) -> Unit) {
         val signList = getFileDatas(Constant.signConfigDir)?.map { it.name } ?: emptyList()
         SelectListDialog(
             showDialog = showFileDialog,
-            title = "选择签名文件",
+            title = "选择签名配置文件",
             items = signList,
             onDismiss = { showFileDialog = false },
             onConfirm = { index ->
@@ -587,17 +619,38 @@ private fun SelectSign(signConfigFile: String, onChange: (String) -> Unit) {
 }
 
 @Composable
-private fun SelectSdk(sdk: String, onChange: (String) -> Unit) {
+private fun SelectSdk(sdk: String, isMust: Boolean = true, onChange: (String) -> Unit) {
     var showFileDialog by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+        var tipText: String=""
+        var isShowTipColor: Boolean=false
+
+        if (sdk.isNotEmpty()){
+            val names = getFileDatas(Constant.sdkFileDir)?.map { "sdk/"+it.name } ?: emptyList()
+            tipText=if (names.contains(sdk)){
+                isShowTipColor=false
+                sdk
+            }else{
+                isShowTipColor=true
+                "$sdk(文件不存在)"
+            }
+        }else{
+            isShowTipColor=true
+            tipText = if (isMust) {
+                "请选择sdk文件(必选)"
+            } else {
+                "请选择sdk文件"
+            }
+        }
         Text(
-            text = "sdk文件:" + sdk.ifEmpty { "请选择sdk文件(必选)" },
+            text = "sdk文件:$tipText",
             modifier = Modifier.weight(1f),
-            color = getTipTextColor(sdk.isEmpty())
+            color = getTipTextColor(isShowTipColor)
         )
         Button(onClick = { showFileDialog = true }) {
             Text("选择文件")
@@ -627,10 +680,26 @@ private fun SelectIcon(value: String, onChange: (String) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        var isShowTipColor: Boolean=false
+        var tipText: String=""
+        if (value.isNotEmpty()){
+            val signList = getFileDatas(Constant.apkConfigResDir)?.map { "res/"+it.name } ?: emptyList()
+            if (signList.contains(value)){
+                isShowTipColor=false
+                tipText=value
+            }else{
+                isShowTipColor=true
+                tipText="$value(文件不存在)"
+            }
+        }else{
+            isShowTipColor=false
+            tipText="请选择图标文件(可不选)"
+        }
+
         Text(
-            text = "应用图标:" + value.ifEmpty { "请选择图标文件(可不选)" },
+            text = "应用图标:$tipText",
             modifier = Modifier.weight(1f),
-            color = color333
+            color = getTipTextColor(isShowTipColor)
         )
         if (value.isNotEmpty()) {
             TextCenter(modifier = Modifier.clickable {

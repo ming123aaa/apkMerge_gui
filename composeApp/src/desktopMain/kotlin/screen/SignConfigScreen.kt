@@ -24,7 +24,13 @@ data class SignConfigState(
 )
 
 fun SignConfig.toState(): SignConfigState {
-    return SignConfigState(signFileName = signFileName, alias = alias, passWord = passWord, keyPassWord = keyPassWord, signVersion = signVersion)
+    return SignConfigState(
+        signFileName = signFileName,
+        alias = alias,
+        passWord = passWord,
+        keyPassWord = keyPassWord,
+        signVersion = signVersion
+    )
 }
 
 fun SignConfigState.toConfig(): SignConfig {
@@ -32,7 +38,7 @@ fun SignConfigState.toConfig(): SignConfig {
         it.signFileName = signFileName
         it.alias = alias
         it.passWord = passWord
-        it.keyPassWord=keyPassWord
+        it.keyPassWord = keyPassWord
         it.signVersion = signVersion
 
 
@@ -47,27 +53,16 @@ fun SignConfigScreen(path: String, onBack: () -> Unit) {
         )
     }
 
-    var showFileDialog by remember { mutableStateOf(false) }
+
 
     Column(
         modifier = Modifier.padding(16.dp).fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = signConfigState.signFileName.ifEmpty { "请选择签名文件(必选)" },
-                modifier = Modifier.weight(1f),
-                color = getTipTextColor (signConfigState.signFileName.isEmpty())
-            )
-            Button(onClick = { showFileDialog = true }) {
-                Text("选择文件")
-            }
-        }
+        SelectSginFile(signConfigState, onChange = {
+            signConfigState = it
+        })
 
         OutlinedTextField(
             value = signConfigState.alias,
@@ -119,19 +114,56 @@ fun SignConfigScreen(path: String, onBack: () -> Unit) {
         }
 
 
-        if (showFileDialog) {
-            val signList = getFileDatas(Constant.signFileDir)?.map { it.name } ?: emptyList()
-            SelectListDialog(
-                showDialog = showFileDialog,
-                title = "选择签名文件",
-                items = signList,
-                onDismiss = { showFileDialog = false },
-                onConfirm = { index ->
-                    val selectedFile = "Sign/${signList[index]}"
-                    signConfigState = signConfigState.copy(signFileName = selectedFile)
-                    showFileDialog = false
-                }
-            )
+    }
+}
+
+@Composable
+private fun SelectSginFile(signConfigState: SignConfigState, onChange: (SignConfigState) -> Unit) {
+
+    var showFileDialog by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        var content = ""
+        var isTipTextColor = false
+
+        if (signConfigState.signFileName.isNotEmpty()) {
+            val signList = getFileDatas(Constant.signFileDir)?.map { "Sign/" + it.name } ?: emptyList()
+            if (signList.contains(signConfigState.signFileName)) {
+                isTipTextColor = false
+                content = signConfigState.signFileName
+            } else {
+                content = signConfigState.signFileName + "(文件不存在)"
+                isTipTextColor = true
+            }
+        } else {
+            isTipTextColor = true
+            content = "请选择签名文件(必选)"
+        }
+        Text(
+            text = "签名文件:$content",
+            modifier = Modifier.weight(1f),
+            color = getTipTextColor(isTipTextColor)
+        )
+        Button(onClick = { showFileDialog = true }) {
+            Text("选择文件")
         }
     }
+    if (showFileDialog) {
+        val signList = getFileDatas(Constant.signFileDir)?.map { it.name } ?: emptyList()
+        SelectListDialog(
+            showDialog = showFileDialog,
+            title = "选择签名文件",
+            items = signList,
+            onDismiss = { showFileDialog = false },
+            onConfirm = { index ->
+                val selectedFile = "Sign/${signList[index]}"
+                onChange(signConfigState.copy(signFileName = selectedFile))
+                showFileDialog = false
+            }
+        )
+    }
+
 }

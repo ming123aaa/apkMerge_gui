@@ -14,7 +14,7 @@ java版本:java17以上版本
 
 ## 编译打包
 运行 gradle->Tasks->compose Desktop->packageUberJarForCurrentOS
-生成目录 composeApp/build/compose/jars/gameBuildTool-windows-x64-1.0.0.jar
+生成目录 [composeApp/build/compose/jars/gameBuildTool-windows-x64-1.0.0.jar](composeApp/build/compose/jars/gameBuildTool-windows-x64-1.0.0.jar)
 
 
 

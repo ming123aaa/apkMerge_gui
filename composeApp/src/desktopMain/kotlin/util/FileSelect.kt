@@ -2,12 +2,22 @@ package util
 
 import java.io.File
 import javax.swing.JFileChooser
+import javax.swing.filechooser.FileNameExtensionFilter
 
 object FileSelect {
 
     fun selectFile(): File? {
         var jFileChooser = JFileChooser()
 
+        var returnValue = jFileChooser.showOpenDialog(null)
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            return jFileChooser.selectedFile
+        }
+        return null
+    }   
+    fun selectDir(): File? {
+        var jFileChooser = JFileChooser()
+        jFileChooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         var returnValue = jFileChooser.showOpenDialog(null)
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             return jFileChooser.selectedFile

@@ -5,7 +5,7 @@ import util.PropertiesStore
 object Constant {
 
     val userDirPath: String = System.getProperty("user.dir")
-
+    val channelOutApkDir="$userDirPath/channel/buildOutApk"
     val channelConfigPath = "$userDirPath/channel/ChannelConfig.json"
     val oldChannelConfigPath = "$userDirPath/channel_old/ChannelConfig.json"
     val channelDir = "$userDirPath/channel"

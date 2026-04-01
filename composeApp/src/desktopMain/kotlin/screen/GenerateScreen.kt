@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.update
+import kotlinproject.composeapp.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 import util.FileSelect
 import util.RuntimeUtil
 import vm.ErrorTipState
+import java.io.DataOutput
 import java.io.File
 
 
@@ -27,6 +29,8 @@ data class GenerateData(
     val apkPath: String = "",
     val isShowLastApk: Boolean = false,//显示 使用上次主包按钮
     val isUseLastApk: Boolean = false, //使用上次主包
+    val isSettingOutputApkPath: Boolean = false,//是否设置过输出APK路径
+    val outputApkPath: String = "",
     val isRunning: Boolean = false, //正在运行状态
     val isWaitStop: Boolean = false, //等待停止状态
     val msg: String = "",
@@ -37,7 +41,11 @@ data class GenerateData(
 @Composable
 fun GenerateScreen(onBack: () -> Unit) {
     val generateData =
-        remember { mutableStateOf(GenerateData(isShowLastApk = File(Constant.baseApk).exists() || File(Constant.baseZip).exists())) }
+        remember {
+            mutableStateOf(GenerateData(isShowLastApk = File(Constant.baseApk).exists() || File(Constant.baseZip).exists(),
+             apkPath = UserPropertiesStore.selectBaseApkPath, outputApkPath = UserPropertiesStore.outputApkPath)
+            )
+        }
     val rememberCoroutineScope = rememberCoroutineScope()
 
     Column(
@@ -60,6 +68,7 @@ fun GenerateScreen(onBack: () -> Unit) {
             }
         }
         SelectApk(generateData, rememberCoroutineScope)
+        SelectOutputPath(generateData, rememberCoroutineScope)
 
         StartButton(generateData, rememberCoroutineScope)
         if (generateData.value.isRunning) {
@@ -135,10 +144,57 @@ private fun SelectApk(
                         val file = FileSelect.selectFile()
                         if (file != null) {
                             generateData.update { it.copy(apkPath = file.absolutePath) }
+                            UserPropertiesStore.selectBaseApkPath=file.absolutePath
                         }
                     }
                 }) {
                     Text("选择文件")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectOutputPath(
+    generateData: MutableState<GenerateData>,
+    rememberCoroutineScope: CoroutineScope
+) {
+    if (!generateData.value.isRunning && !generateData.value.isComplete) {
+        // APK 路径显示
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ChexBoxText(generateData.value.isSettingOutputApkPath, onCheckedChange = { b ->
+                    generateData.update {
+                        it.copy(isSettingOutputApkPath = b)
+                    }
+                }, text = "是否设置apk输出文件夹")
+            }
+
+        if (generateData.value.isSettingOutputApkPath) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "apk输出路径:" + generateData.value.outputApkPath.ifEmpty { "请选择apk输出文件夹" },
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = {
+                    rememberCoroutineScope.launch(Dispatchers.IO) {
+                        val file = FileSelect.selectDir()
+                        if (file != null) {
+                            generateData.update { it.copy(outputApkPath = file.absolutePath) }
+                            UserPropertiesStore.outputApkPath=file.absolutePath
+                        }
+                    }
+                }) {
+                    Text("选择文件夹")
                 }
             }
         }
@@ -184,10 +240,11 @@ private fun StartButton(
                                         buildUseJar(generateData)
                                     }
                                 }
-
                                 delay(1000)
+                                if (isRunning && generateData.value.isSettingOutputApkPath && generateData.value.outputApkPath.isNotBlank()) { //需要复制生成的apk到其他目录
+                                    copyGenerateApkToOtherDir(generateData.value.outputApkPath,generateData)
+                                }
                             }
-
 
                             if (isRunning) {
                                 FileSelect.openFile(Constant.userDirPath + "\\channel\\buildOutApk")
@@ -234,6 +291,31 @@ private fun StartButton(
         }, enabled = generateData.value.isRunning && !generateData.value.isWaitStop) {
             Text("停止")
         }
+    }
+}
+
+private fun copyGenerateApkToOtherDir(outDirPath: String,generateData: MutableState<GenerateData>) {
+    val apkFile = File(Constant.channelOutApkDir)
+    val outApkFile = File(outDirPath)
+    if (!outApkFile.exists()) {
+        outApkFile.mkdirs()
+    }
+    try {
+        if (!apkFile.isDirectory){
+            throw Exception("${Constant.channelOutApkDir} 不是一个文件夹")
+        }
+        if (!outApkFile.isDirectory) {
+            throw Exception("${outDirPath} 不是一个文件夹")
+        }
+        generateData.update { data -> data.copy(logMsg = data.logMsg+"\n开始复制生成的apk到:${outApkFile.absolutePath}")  }
+        apkFile.listFiles()?.forEach { apk ->
+            val outFile = File("${outApkFile.absolutePath}/${apk.name}")
+            apk.copyTo(outFile, overwrite = true)
+            generateData.update { it.copy(logMsg = it.logMsg + "\n" + "复制文件:${apk.name} 成功") }
+        }
+
+    } catch (e: Throwable) {
+        ErrorTipState.update { it.copy(isShow = true, msg = e.message ?: "") }
     }
 }
 

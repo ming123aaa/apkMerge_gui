@@ -29,6 +29,28 @@ object UserPropertiesStore {
                 userPropertiesStore.put("isShowApkConfig", value.toString())
             }
         }
+    var selectBaseApkPath: String
+        get() {
+            return runCatching {
+                userPropertiesStore.get("selectBaseApkPath")
+            }.getOrNull() ?: ""
+        }
+        set(value) {
+            runCatching{
+                userPropertiesStore.put("selectBaseApkPath", value.toString())
+            }
+        }
+    var outputApkPath: String
+        get() {
+            return runCatching {
+                userPropertiesStore.get("outputApkPath")
+            }.getOrNull() ?: ""
+        }
+        set(value) {
+            runCatching{
+                userPropertiesStore.put("outputApkPath", value.toString())
+            }
+        }
 
 
 }

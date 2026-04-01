@@ -1,11 +1,12 @@
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import util.PropertiesStore
+import java.io.File
 
 object Constant {
 
     val userDirPath: String = System.getProperty("user.dir")
-    val channelOutApkDir="$userDirPath/channel/buildOutApk"
+    val channelOutApkDir = "$userDirPath/channel/buildOutApk"
     val channelConfigPath = "$userDirPath/channel/ChannelConfig.json"
     val oldChannelConfigPath = "$userDirPath/channel_old/ChannelConfig.json"
     val channelDir = "$userDirPath/channel"
@@ -14,25 +15,26 @@ object Constant {
     val apkConfigDir = "$userDirPath/channel/ApkConfig"
     val apkConfigResDir = "$userDirPath/channel/ApkConfig/res"
 
-    val signConfigDir= "$userDirPath/channel/SignConfig"
-    val signFileDir= "$userDirPath/channel/SignConfig/Sign"
-    val sdkFileDir= "$userDirPath/channel/sdk"
+    val signConfigDir = "$userDirPath/channel/SignConfig"
+    val signFileDir = "$userDirPath/channel/SignConfig/Sign"
+    val sdkFileDir = "$userDirPath/channel/sdk"
 
-    val outputChannelZip="$userDirPath/output/channel.zip"
-    val outputDir="$userDirPath/output"
+    val outputChannelZip = "$userDirPath/output/channel.zip"
+    val outputDir = "$userDirPath/output"
 
-    val baseApk="${userDirPath}/base.apk"
-    val baseZip="${userDirPath}/base.zip"
-
-
-
-    val buildApkBat="${userDirPath}/build.bat"
-    val buildZipBat="${userDirPath}/buildZip.bat"
-    val metadataKey="${userDirPath}/metaDataKey.json"
-    val userConfig="${userDirPath}/user.txt"
+    val baseApk = "${userDirPath}/base.apk"
+    val baseZip = "${userDirPath}/base.zip"
 
 
+    val buildApkBat = "${userDirPath}/build.bat"
+    val buildZipBat = "${userDirPath}/buildZip.bat"
+    val metadataKey = "${userDirPath}/metaDataKey.json"
+    val userConfig = "${userDirPath}/user.txt"
 
+    fun getWriteCopyApkLog(outApkPath: String): String {
+        var file = File(outApkPath)
+        return file.absolutePath + "/CopyApkLog.txt"
+    }
 
 
     fun getApkConfigPath(channelName: String): String {
@@ -43,15 +45,17 @@ object Constant {
         return "ApkConfig/ApkConfig_${channelName}.json"
     }
 
-    fun getSignConfigPath(signName:String):String{
-        return signConfigDir+"/SignConfig_${signName}.json"
+    fun getSignConfigPath(signName: String): String {
+        return signConfigDir + "/SignConfig_${signName}.json"
     }
 
-    fun getMetaDataKeyMap():Map<String,String>{
+    fun getMetaDataKeyMap(): Map<String, String> {
         try {
-            return Gson().fromJson<HashMap<String,String>>(FileUtils.readText(metadataKey),object :TypeToken<HashMap<String,String>>(){}.type)
-        }catch (_:Throwable){}
-        return  mapOf()
+            return Gson().fromJson<HashMap<String, String>>(FileUtils.readText(metadataKey),
+                object : TypeToken<HashMap<String, String>>() {}.type)
+        } catch (_: Throwable) {
+        }
+        return mapOf()
     }
 
 }

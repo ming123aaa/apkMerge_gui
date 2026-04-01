@@ -52,5 +52,18 @@ object UserPropertiesStore {
             }
         }
 
+    var isWriteCopyApkLog: Boolean
+        get() {
+            return runCatching {
+                userPropertiesStore.get("isWriteCopyApkLog").toBoolean()
+            }.getOrNull() ?: false
+        }
+        set(value) {
+            runCatching{
+                userPropertiesStore.put("isWriteCopyApkLog", value.toString())
+            }
+        }
+
+
 
 }

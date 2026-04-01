@@ -1,4 +1,5 @@
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
@@ -6,6 +7,17 @@ import java.io.OutputStreamWriter
 import java.nio.charset.Charset
 
 object FileUtils {
+
+    /**
+     * 将内容追加到文件中,如果文件不存在则创建文件
+     */
+    fun writeTextAppend(fileName:String,content:String){
+        File(fileName).parentFile.mkdirs()
+        val outputStream: OutputStream = FileOutputStream(File(fileName),true)
+        OutputStreamWriter(outputStream, Charset.forName("UTF-8")).use {
+            it.write(content)
+        }
+    }
 
 
     fun readText(fileName:String):String{

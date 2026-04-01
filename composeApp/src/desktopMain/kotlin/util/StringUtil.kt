@@ -10,4 +10,11 @@ object StringUtil {
         val matcher = pattern.matcher(input)
         return matcher.replaceAll("")
     }
+
+    /**
+     *  获取当前时间
+     */
+    fun getCurrentDate(): String {
+        return java.time.LocalDateTime.now().toString()
+    }
 }
